@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   Pressable,
-  Alert,
   Platform,
   StyleSheet,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import * as Notifications from 'expo-notifications';
+import { Video } from 'expo-av'; // ✅ CERTO
+import { decode as atob } from 'base-64';
 import { supabase } from '../SupaBaseConfig';
 
 const BUCKET_NAME = 'videos';
@@ -18,15 +20,29 @@ export default function VideoUpload() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
 
+  // Pede permissão para notificações assim que o componente monta
+  useEffect(() => {
+    const requestNotificationPermission = async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Permita o acesso às notificações.');
+      }
+    };
+    requestNotificationPermission();
+  }, []);
+
   const escolherVideo = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: 'video/*',
         copyToCacheDirectory: true,
+        multiple: false,
       });
 
-      if (result.type === 'success') {
-        setVideoUri(result.uri);
+      const asset = result.assets?.[0];
+
+      if (asset?.uri) {
+        setVideoUri(asset.uri);
         setMessage('');
       } else {
         setMessage('Seleção cancelada.');
@@ -36,6 +52,18 @@ export default function VideoUpload() {
       console.error('Erro ao escolher vídeo:', error);
       setMessage('Erro ao escolher vídeo.');
     }
+  };
+
+  // Função para enviar notificação de upload concluído
+  const sendNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Upload concluído',
+        body: 'Seu vídeo foi enviado com sucesso!',
+        sound: true,
+      },
+      trigger: { seconds: 1 },
+    });
   };
 
   const uploadVideo = async () => {
@@ -80,6 +108,7 @@ export default function VideoUpload() {
       } else {
         setMessage('Vídeo enviado com sucesso!');
         setVideoUri(null);
+        await sendNotification(); // Notificação aqui
       }
     } catch (err) {
       console.error('Erro inesperado:', err);
@@ -91,11 +120,21 @@ export default function VideoUpload() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Enviar vídeo para Supabase</Text>
+      <Text style={styles.title}>Enviar vídeo para Supabase </Text>
 
       <Pressable style={styles.button} onPress={escolherVideo}>
         <Text style={styles.buttonText}>Escolher vídeo</Text>
       </Pressable>
+
+      {videoUri && (
+        <Video
+          source={{ uri: videoUri }}
+          style={styles.video}
+          useNativeControls
+          resizeMode="contain"
+          isLooping
+        />
+      )}
 
       <Pressable
         style={[styles.button, uploading && styles.disabled]}
@@ -139,6 +178,12 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#17408B',
     fontWeight: 'bold',
+  },
+  video: {
+    width: '100%',
+    height: 200,
+    marginVertical: 10,
+    backgroundColor: '#000',
   },
   message: {
     marginTop: 20,

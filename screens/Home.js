@@ -21,7 +21,10 @@ export default function HomeScreen({ navigation }) {
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('UploadVideos')}>
         <Text style={styles.buttonText}>⬆️ Upload Vídeo</Text>
       </TouchableOpacity>
-    </View>
+      <TouchableOpacity style={styles.button2} onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.buttonText}>Sair</Text>
+      </TouchableOpacity>
+     </View>
   );
 }
 
@@ -41,6 +44,21 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#4a90e2',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    marginVertical: 10,
+    width: '100%',
+    maxWidth: 300,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  button2: {
+    backgroundColor: 'red',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 16,

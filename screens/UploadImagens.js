@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -20,7 +20,17 @@ const BUCKET_NAME = "imagens";
 
 const UploadFoto = () => {
   const [imageUri, setImageUri] = useState(null);
-  const [uploading, setUploading] = useState(false); // estado de carregamento
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    const requestNotificationPermission = async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Permita o acesso às notificações.');
+      }
+    };
+    requestNotificationPermission();
+  }, []);
 
   const escolherImagem = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -46,7 +56,7 @@ const UploadFoto = () => {
         body: "Sua imagem foi enviada com sucesso!",
         sound: true,
       },
-      trigger: null,
+      trigger: { seconds: 1 },
     });
   };
 
@@ -56,7 +66,7 @@ const UploadFoto = () => {
       return;
     }
 
-    setUploading(true); // começa o carregamento
+    setUploading(true);
 
     try {
       const fileName = `${Date.now()}.jpg`;
@@ -98,11 +108,13 @@ const UploadFoto = () => {
       Alert.alert("Erro", "Erro inesperado ao enviar imagem.");
     }
 
-    setUploading(false); // finaliza o carregamento
+    setUploading(false);
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Enviar imagem para Supabase</Text>
+
       <Pressable style={styles.button} onPress={escolherImagem}>
         <Text style={styles.buttonText}>Escolher Imagem</Text>
       </Pressable>
@@ -129,9 +141,17 @@ const UploadFoto = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    alignItems: "center",
     backgroundColor: "#17408B",
     height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: {
+    fontSize: 20,
+    color: "#FFF",
+    fontWeight: "bold",
+    marginBottom: 30,
+    textAlign: "center",
   },
   button: {
     backgroundColor: "#FEBE10",
@@ -139,13 +159,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     width: "100%",
     alignItems: "center",
-    marginTop: 40,
+    marginBottom: 20,
   },
   buttonUpload: {
     backgroundColor: "#FEBE10",
     padding: 10,
     borderRadius: 5,
-    marginTop: 20,
     width: "100%",
     alignItems: "center",
   },
@@ -160,6 +179,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     marginVertical: 20,
+    borderRadius: 10,
   },
 });
 
